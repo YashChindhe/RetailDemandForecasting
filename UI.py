@@ -2,6 +2,9 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import numpy as np
+from sklearn.linear_model import LinearRegression  # Example model
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error
 
 # 1. Load the Data (Replace with your actual data loading)
 # Assuming you have a CSV file or a Pandas DataFrame
@@ -15,7 +18,7 @@ def load_data():
 def prepare_data(file):
     file.Date = file.Date.astype('datetime64[ns]')
 
-    storeid_mapping = {'S001': 1, 'S002': 2, 'S003': 3, 'S004': 4, 'S0005': 5}
+    storeid_mapping = {'S001': 1, 'S002': 2, 'S003': 3, 'S004': 4, 'S005': 5}
     file['Store ID'].replace(storeid_mapping, inplace=True)
 
     productid_mapping = {'P0001': 1, 'P0002': 2, 'P0003': 3, 'P0004': 4, 'P0005': 5, 'P0006': 6, 'P0007': 7,
@@ -43,6 +46,44 @@ def prepare_data(file):
 # 3. Streamlit App
 def main():
     st.title("Demand Forecasting Dashboard")
+
+    with st.expander("ℹ️ View Data Mappings"):
+        st.subheader("Store ID Mapping")
+        st.table(pd.DataFrame({
+            'Store ID': ['S001', 'S002', 'S003', 'S004', 'S005'],
+            'Mapped Value': [1, 2, 3, 4, 5]
+        }))
+
+        st.subheader("Product ID Mapping")
+        st.table(pd.DataFrame({
+            'Product ID': [f'P{str(i).zfill(4)}' for i in range(1, 21)],
+            'Mapped Value': list(range(1, 21))
+        }))
+
+        st.subheader("Category Mapping")
+        st.table(pd.DataFrame({
+            'Category': ['Groceries', 'Toys', 'Electronics', 'Furniture', 'Clothing'],
+            'Mapped Value': [1, 2, 3, 4, 5]
+        }))
+
+        st.subheader("Region Mapping")
+        st.table(pd.DataFrame({
+            'Region': ['North', 'South', 'West', 'East'],
+            'Mapped Value': [1, 2, 3, 4]
+        }))
+
+        st.subheader("Weather Condition Mapping")
+        st.table(pd.DataFrame({
+            'Weather Condition': ['Rainy', 'Sunny', 'Cloudy', 'Snowy'],
+            'Mapped Value': [1, 2, 3, 4]
+        }))
+
+        st.subheader("Seasonality Mapping")
+        st.table(pd.DataFrame({
+            'Seasonality': ['Autumn', 'Summer', 'Winter', 'Spring'],
+            'Mapped Value': [1, 2, 3, 4]
+        }))
+
 
     # 4. Load and Prepare Data
     df = load_data()
@@ -128,6 +169,72 @@ def main():
     else:
         st.write("No data to display metrics.")
 
+    # 12. Future Prediction Section
+    st.header("Future Demand Prediction")
+    st.write("Select parameters to predict future demand.")
+
+    # 13. Prediction Inputs
+    predict_product_id = st.selectbox("Product ID", df['Product ID'].unique())
+    predict_store_id = st.selectbox("Store ID", df['Store ID'].unique())
+    predict_category = st.selectbox("Category", df['Category'].unique())
+    predict_region = st.selectbox("Region", df['Region'].unique())
+    predict_date = st.date_input("Prediction Date", value=df['Date'].max() + pd.Timedelta(days=1))  # Default to next day
+
+    # 14. Prediction Frequency
+    prediction_frequency = st.radio(
+        "Prediction Frequency",
+        ('Next Day', 'Next Week', 'Next Month', 'Next Year')
+    )
+
+    # 15. Train a Model (Simplified for demonstration)
+    # In a real application, you would use a more sophisticated model and feature engineering.
+    df_model = df[['Date', 'Store ID', 'Product ID', 'Category', 'Region', 'Demand Forecast']]
+    df_model['Date'] = pd.to_numeric(df_model['Date'])  # Convert date to numerical for the model
+    X = df_model.drop('Demand Forecast', axis=1)
+    y = df_model['Demand Forecast']
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42) # Added a train test split
+    model = LinearRegression()  # Using a simple linear regression model
+    model.fit(X_train, y_train)
+
+    # 16. Make Prediction
+    def make_prediction(model, product_id, store_id, category, region, date):
+        predict_df = pd.DataFrame({
+            'Date': [pd.Timestamp(date).value],  # fixed here
+            'Store ID': [store_id],
+            'Product ID': [product_id],
+            'Category': [category],
+            'Region': [region],
+        })
+        prediction = model.predict(predict_df)
+        return prediction[0]
+
+        # Adjust prediction date
+    if prediction_frequency == 'Next Day':
+        adjusted_date = predict_date + pd.Timedelta(days=1)
+    elif prediction_frequency == 'Next Week':
+        adjusted_date = predict_date + pd.Timedelta(weeks=1)
+    elif prediction_frequency == 'Next Month':
+        adjusted_date = predict_date + pd.DateOffset(months=1)
+    elif prediction_frequency == 'Next Year':
+        adjusted_date = predict_date + pd.DateOffset(years=1)
+
+
+     # Make prediction
+    if st.button("Predict Demand"):
+        predicted_demand = make_prediction(model, predict_product_id, predict_store_id, predict_category, predict_region, adjusted_date)
+        st.subheader("Predicted Demand")
+
+        if prediction_frequency=='Next Day':
+            st.write(f"The predicted demand for the selected parameters for {prediction_frequency} is: {predicted_demand:.2f}")
+        if prediction_frequency=='Next Week':
+            st.write(f"The predicted demand for the selected parameters for {prediction_frequency} is: {predicted_demand*7:.2f}")
+        if prediction_frequency=='Next Month':
+            st.write(f"The predicted demand for the selected parameters for {prediction_frequency} is: {predicted_demand*30:.2f}")
+        if prediction_frequency=='Next Year':
+            st.write(f"The predicted demand for the selected parameters for {prediction_frequency} is: {predicted_demand*365:.2f}")
+
+        #st.write(f"The predicted demand for the selected parameters for {prediction_frequency} is: {predicted_demand:.2f}")
+        st.write(f"Product ID: {predict_product_id}, Store ID: {predict_store_id}, Category: {predict_category}, Region: {predict_region}, Date: {predict_date}") #Added to display the selected parameters
 
 if __name__ == "__main__":
     main()
