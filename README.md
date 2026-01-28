@@ -46,25 +46,6 @@ The project focuses on building a clean and understandable pipeline from raw ret
 
 ---
 
-## Installation
-
-### 1. Clone the repository
-
-git clone <your-repository-url>
-cd RetailDemandForecasting
-
-### 2. Create and activate a virtual environment (recommended)
-
-python -m venv venv
-source venv/bin/activate      # Linux / Mac
-venv\Scripts\activate         # Windows
-
-### 3. Install dependencies
-
-pip install -r requirements.txt
-
----
-
 ## Running the Streamlit Dashboard
 
 1. Install dependencies : pip install -r requirements.txt
