@@ -5,17 +5,6 @@ The project focuses on building a clean and understandable pipeline from raw ret
 
 ---
 
-## Project Structure
-
-RetailDemandForecasting/
-├── retail_store_inventory.csv
-├── UI.py
-├── project_XGB.ipynb
-├── requirements.txt
-└── README.md
-
----
-
 ## Features
 
 - Data cleaning and feature engineering
@@ -78,7 +67,8 @@ pip install -r requirements.txt
 
 ## Running the Streamlit Dashboard
 
-streamlit run UI.py
+1. Install dependencies : pip install -r requirements.txt
+2. run command : streamlit run UI.py
 
 The app will be available at:
 http://localhost:8501
