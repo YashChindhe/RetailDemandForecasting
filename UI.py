@@ -5,10 +5,10 @@ import numpy as np
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split
 
-# ==================== CONFIG ====================
+#Config
 st.set_page_config(layout="wide")
 
-# ==================== DATA ====================
+# Load Data
 @st.cache_data
 def load_data():
     df = pd.read_csv("retail_store_inventory.csv")
@@ -28,13 +28,13 @@ def prepare_data(df):
     df['Weekday'] = df['Date'].dt.day_name()
     return df
 
-# ==================== APP ====================
+# UI
 def main():
     st.title("Demand Forecasting Dashboard")
 
     df = load_data()
 
-    # -------- SIDEBAR FILTERS --------
+    # Sidebar Filters
     with st.sidebar:
         st.header("Filters")
         product = st.multiselect("Product", df['Product ID'].unique(), df['Product ID'].unique())
@@ -52,7 +52,7 @@ def main():
         (df['Date'].dt.date <= date_range[1])
     ]
 
-    # -------- GROUPING --------
+    # Grouping options
     group_cols = st.multiselect(
         "Group By",
         ['Date','Product ID','Store ID','Category','Region','Month','Year','Weekday'],
@@ -64,7 +64,7 @@ def main():
         actual_demand=('Units Sold','sum')
     ).reset_index()
 
-    # -------- KPIs --------
+    # KPI's
     total_f = agg['demand_forecast'].sum()
     total_a = agg['actual_demand'].sum()
     mae = np.mean(np.abs(agg['demand_forecast'] - agg['actual_demand']))
@@ -76,7 +76,7 @@ def main():
     k3.metric("MAE", f"{mae:.2f}")
     k4.metric("RMSE", f"{rmse:.2f}")
 
-    # -------- DATA + CHART --------
+    # Data + Chart
     left, right = st.columns([1.2,2])
 
     with left:
@@ -96,10 +96,10 @@ def main():
         else:
             st.info("Select Date to see time series")
 
-    # -------- TABS --------
+    # Tabs
     tab1, tab2, tab3 = st.tabs(["Prediction","Group Info","Mappings"])
 
-    # -------- TAB 1 : PREDICTION --------
+    # TAB 1 : PREDICTION
     with tab1:
         model_df = df[['Date','Store ID','Product ID','Category','Region','Demand Forecast']].copy()
         model_df['Date'] = model_df['Date'].astype('int64')
@@ -144,13 +144,13 @@ def main():
             multiplier = {'Next Day':1,'Next Week':7,'Next Month':30,'Next Year':365}[freq]
             st.metric("Predicted Demand", f"{pred*multiplier:.2f}")
 
-    # -------- TAB 2 : GROUP INFO --------
+    # TAB 2 : GROUP INFO]
     with tab2:
         st.markdown("**Current Grouping Columns**")
         st.write(group_cols)
         st.markdown("Grouping controls aggregation granularity. Multiple selections increase dimensionality.")
 
-    # -------- TAB 3 : MAPPINGS --------
+    # TAB 3 : MAPPINGS
     with tab3:
         mapping_df = pd.DataFrame({
             'Feature': ['Store ID','Category','Region'],
